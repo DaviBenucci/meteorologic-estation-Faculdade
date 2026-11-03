@@ -1,0 +1,3 @@
+import estacao
+
+estacao.main()

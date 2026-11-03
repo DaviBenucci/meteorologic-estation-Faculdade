@@ -1,0 +1,42 @@
+# Ambientes Python e arquivos compilados (em qualquer pasta).
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.mpy
+*.egg-info/
+build/
+dist/
+
+# Configuração local e segredos. Exemplos continuam disponíveis.
+/firmware/config.py
+.env
+.env.*
+!.env.example
+
+# Banco local e arquivos auxiliares de transação SQLite.
+/BackEnd/data/*.db
+/BackEnd/data/*.db-*
+
+# Ferramentas locais, caches e resultados de testes.
+.serena/
+.vscode/
+.idea/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.log
+
+# Arquivos temporários de editores e do sistema.
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

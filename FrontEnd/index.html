@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12100f">
+  <meta name="description" content="Leituras ambientais de uma estação meteorológica acadêmica com ESP32.">
+  <title>Estação ESP32 · Monitor ambiental</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/dashboard/style.css">
+  <script src="/dashboard/script.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/dashboard/" aria-label="Estação ESP32, início">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16V9m5 10V5m5 11V9m5 10V5"/></svg></span>
+      <span>ESTAÇÃO <strong>ESP32</strong><small>MONITOR AMBIENTAL</small></span>
+    </a>
+    <span class="project-label"><span aria-hidden="true">◈</span> PROJETO ACADÊMICO</span>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow"><span></span> OBSERVAR. MEDIR. COMPREENDER.</p>
+        <h1>Leituras do <span>ambiente.</span></h1>
+        <p class="intro-description">Uma janela para os sensores da estação.<br>As últimas medições disponíveis, em um só lugar.</p>
+      </div>
+      <div class="interval-label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg><span>Consulta automática<strong>a cada 5 segundos</strong></span></div>
+    </section>
+
+    <section class="connection" aria-label="Estado da consulta">
+      <div id="api-status" class="api-status" data-state="loading" role="status" aria-live="polite" aria-atomic="true"><span class="status-dot" aria-hidden="true"></span><span id="status-text">Consultando a API…</span></div>
+      <p>Última consulta bem-sucedida <time id="last-query">—</time></p>
+      <p>Último POST recebido <time id="last-received">—</time></p>
+    </section>
+
+    <noscript><p class="notice">Ative o JavaScript para consultar e atualizar as medições.</p></noscript>
+    <p id="notice" class="notice" hidden></p>
+
+    <section id="readings" class="readings" aria-label="Indicadores ambientais">
+      <article class="card temperature">
+        <div class="card-heading"><span class="sensor">DHT22</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14.5V5a3 3 0 0 1 6 0v9.5a5 5 0 1 1-6 0Z"/><path d="M12 8v10"/></svg></div>
+        <h2>Temperatura <span>do ar</span></h2>
+        <p class="measurement"><span id="temperatura_DHT" class="value is-unavailable">Aguardando</span><span id="temperatura_DHT-unit" class="unit" hidden>°C</span></p>
+        <p class="card-note">Sensor de temperatura e umidade</p>
+      </article>
+
+      <article class="card humidity">
+        <div class="card-heading"><span class="sensor">DHT22</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s-7 8-7 12a7 7 0 0 0 14 0c0-4-7-12-7-12Z"/><path d="M9 15a3 3 0 0 0 3 3"/></svg></div>
+        <h2>Umidade <span>relativa</span></h2>
+        <p class="measurement"><span id="umidade" class="value is-unavailable">Aguardando</span><span id="umidade-unit" class="unit" hidden>%</span></p>
+        <p class="card-note">Umidade relativa do ar</p>
+      </article>
+
+      <article class="card temperature">
+        <div class="card-heading"><span class="sensor">BMP280</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14.5V5a3 3 0 0 1 6 0v9.5a5 5 0 1 1-6 0Z"/><path d="M12 8v10m5-6h3m-3-4h3"/></svg></div>
+        <h2>Temperatura <span>do BMP</span></h2>
+        <p class="measurement"><span id="temperatura_BMP" class="value is-unavailable">Aguardando</span><span id="temperatura_BMP-unit" class="unit" hidden>°C</span></p>
+        <p class="card-note">Temperatura medida pelo barômetro</p>
+      </article>
+
+      <article class="card pressure">
+        <div class="card-heading"><span class="sensor">BMP280</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19a10 10 0 1 1 16 0M12 5v2M5 10l2 1m12-1-2 1m-5 5 4-5"/><circle cx="12" cy="16" r="2"/></svg></div>
+        <h2>Pressão <span>atmosférica</span></h2>
+        <p class="measurement"><span id="pressao_BMP" class="value is-unavailable">Aguardando</span><span id="pressao_BMP-unit" class="unit" hidden>hPa</span></p>
+        <p class="card-note">Pressão local, sem correção de altitude</p>
+      </article>
+
+      <article class="card light">
+        <div class="card-heading"><span class="sensor">SENSOR DE LUZ</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></div>
+        <h2>Luminosidade <span>do ambiente</span></h2>
+        <p class="measurement"><span id="luminosidade" class="value is-unavailable">Aguardando</span><span id="luminosidade-unit" class="unit" hidden></span></p>
+        <p class="card-note">Leitura digital: claro ou escuro</p>
+      </article>
+
+      <article class="card gas">
+        <div class="card-heading"><span class="sensor">MQ-135</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h12a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h5a3 3 0 1 1-3 3"/></svg></div>
+        <h2>Gás <span>· leitura bruta</span></h2>
+        <p class="measurement"><span id="gas" class="value is-unavailable">Aguardando</span><span id="gas-unit" class="unit" hidden></span></p>
+        <p class="card-note">Sem conversão em concentração ou índice</p>
+      </article>
+    </section>
+
+    <section class="monitoring" aria-labelledby="monitoring-title">
+      <h2 id="monitoring-title">Monitoramento e alertas</h2>
+      <div id="alerts" class="alerts" data-state="INDISPONIVEL" role="status" aria-live="polite">
+        <strong id="alerts-state">Consultando monitoramento…</strong>
+        <p id="alerts-message"></p>
+        <p id="alerts-list"></p>
+        <p class="alerts-time">Última medição: <time id="alerts-received">—</time></p>
+      </div>
+      <p class="alerts-note">Limites demonstrativos; não são avisos meteorológicos oficiais.</p>
+    </section>
+
+    <section class="history" aria-labelledby="history-title">
+      <div class="history-heading">
+        <div>
+          <p class="eyebrow"><span></span> HISTÓRICO E ANÁLISE</p>
+          <h2 id="history-title">O ambiente <span>ao longo do tempo.</span></h2>
+        </div>
+        <label class="period-control" for="history-period">Período
+          <select id="history-period">
+            <option value="5m">Últimos 5 minutos</option>
+            <option value="10m">Últimos 10 minutos</option>
+            <option value="15m">Últimos 15 minutos</option>
+            <option value="1h">Última hora</option>
+            <option value="6h">Últimas 6 horas</option>
+            <option value="24h">Últimas 24 horas</option>
+          </select>
+        </label>
+      </div>
+      <p id="history-status" class="history-status" role="status" aria-live="polite">Consultando histórico…</p>
+      <div id="statistics" class="statistics" aria-label="Estatísticas do período"></div>
+      <div class="charts">
+        <article class="chart-card">
+          <h3>Temperatura <span>°C</span></h3>
+          <svg id="temperature-chart" class="chart" viewBox="0 0 640 260" role="img" aria-label="Temperatura DHT22 e BMP280"></svg>
+          <p class="chart-axis">Horário local · <span>Temperatura em °C</span></p>
+        </article>
+        <article class="chart-card">
+          <h3>Umidade relativa <span>%</span></h3>
+          <svg id="humidity-chart" class="chart" viewBox="0 0 640 260" role="img" aria-label="Umidade relativa do DHT22"></svg>
+          <p class="chart-axis">Horário local · <span>Umidade em %</span></p>
+        </article>
+        <article class="chart-card">
+          <h3>Pressão atmosférica <span>hPa</span></h3>
+          <svg id="pressure-chart" class="chart" viewBox="0 0 640 260" role="img" aria-label="Pressão atmosférica do BMP280"></svg>
+          <p class="chart-axis">Horário local · <span>Pressão em hPa</span></p>
+        </article>
+      </div>
+    </section>
+
+    <aside class="data-note"><span class="info-icon" aria-hidden="true">i</span><p><strong>Sobre estas leituras</strong> O horário do último POST é registrado pelo servidor em UTC e exibido no seu horário local. As medições são marcadas como desatualizadas após o limite de comunicação configurado. A disponibilidade da API não confirma a conexão do ESP32 nem o horário da coleta nos sensores.</p></aside>
+  </main>
+
+  <footer><span>ESTAÇÃO ESP32 <span class="footer-divider">/</span> Ciências da Computação</span><span>Sensores ambientais · Projeto acadêmico</span></footer>
+</body>
+</html>
