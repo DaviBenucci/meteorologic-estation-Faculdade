@@ -1,0 +1,10 @@
+Revalidação independente tentativa 1, Linux, API http://127.0.0.1:8000. Porta serial não reaberta.
+GET /medicoes/ultima, amostra 0: HTTP 200 recebida_em 2026-11-03T23:19:57.813021Z idade_segundos 4.392623 desatualizada false gas 370.
+Após 9 segundos, amostra 1: HTTP 200 recebida_em 2026-11-03T23:20:05.159184Z idade_segundos 6.049259 desatualizada false gas 352.
+GET /dashboard/ HTTP 200, 9399 bytes. GET /medicoes/historico?periodo=24h&limite=500 HTTP 200, 500 registros. GET /medicoes/estatisticas?periodo=24h HTTP 200, objeto com periodo, quantidade e estatísticas dos sensores.
+GET /alertas/atuais HTTP 200: estado NORMAL, alertas [], recebida_em 2026-11-03T23:20:05.159184Z.
+GET /mq135/analise HTTP 200: estado PENDENTE, ADC 352, estimativas indisponíveis por calibração pendente, recebida_em 2026-11-03T23:20:05.159184Z.
+Código firmware/estacao.py linhas 11-15 e 82-88: intervalos 5000, 7000 e 10000 ms, MQ135 habilitado e leitura ADC bruta.
+Evidência de Sol fw001-device.txt: readback 31 bytes hash b32cb4641234f8f51435936ce34896735fd8779e31d92b358a2d94d7645d5b3f; estacao.py hash b45141be2442611c2f08a76cc7c535d3bf316dc47262982b6748e38a8e930044; compilação e boot automáticos registrados, 11 leituras e 8 POSTs 200 em observação de 55 s. Evidência revisada, não repetida na serial para preservar a coleta.
+Browser: cua.createBrowserTab('iab', 'http://127.0.0.1:8000/dashboard/', {visible:false}) retornou 'The browser access host is unavailable'; cua.getState retornou browsers [] e a mesma falha. Gráficos, estado visual, controle de período e alertas renderizados não foram verificados.
+Snapshot antes e depois: HEAD 37d03e1adb77eb8739f2f15fccfc0839e149c8ed, fingerprint 6cc47a293b4ae93681c6cd33c9f6ea3aa69b915729a3d47c2a8786dff983847f.

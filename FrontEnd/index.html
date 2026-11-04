@@ -76,10 +76,19 @@
 
       <article class="card gas">
         <div class="card-heading"><span class="sensor">MQ-135</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h12a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h5a3 3 0 1 1-3 3"/></svg></div>
-        <h2>Gás <span>· leitura bruta</span></h2>
-        <p class="measurement"><span id="gas" class="value is-unavailable">Aguardando</span><span id="gas-unit" class="unit" hidden></span></p>
-        <p class="card-note">Sem conversão em concentração ou índice</p>
+        <h2>CO₂ <span>· estimativa MQ-135</span></h2>
+        <p class="measurement"><span id="gas" class="value is-unavailable">Aguardando</span><span id="gas-unit" class="unit" hidden>ppm estimados</span></p>
+        <p class="card-note">Modelo experimental · não identifica o gás presente</p>
       </article>
+    </section>
+
+    <section class="monitoring" aria-labelledby="gas-analysis-title">
+      <h2 id="gas-analysis-title">Análise experimental de gases</h2>
+      <div class="alerts" role="status">
+        <strong id="gas-analysis-status">Calibração pendente — estimativas indisponíveis.</strong>
+        <p id="gas-estimates">Estimativas de CO₂, NH₃, álcool e benzeno indisponíveis.</p>
+        <p>As estimativas utilizam modelos matemáticos aplicados à resposta do MQ-135. O sensor não identifica individualmente os gases nem substitui equipamentos de medição calibrados.</p>
+      </div>
     </section>
 
     <section class="monitoring" aria-labelledby="monitoring-title">

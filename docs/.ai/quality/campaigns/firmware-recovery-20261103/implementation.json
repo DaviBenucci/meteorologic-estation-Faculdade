@@ -1,0 +1,35 @@
+{
+  "agent": "sol_developer",
+  "correction_attempt": 1,
+  "outcome": "passed",
+  "revision": {
+    "head": "37d03e1adb77eb8739f2f15fccfc0839e149c8ed",
+    "worktree_sha256": "6cc47a293b4ae93681c6cd33c9f6ea3aa69b915729a3d47c2a8786dff983847f"
+  },
+  "environment": "Linux; ESP32 físico /dev/ttyACM0; MicroPython v1.29.0 (2026-08-24), pyserial 3.5, 115200 baud; DTR=False/RTS=False definidos antes de open; backend http://10.62.215.51:8000",
+  "evidence": [
+    "docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/fw001-device.txt",
+    "docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/fw001-recovery.py",
+    "docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/fw001-after-close.txt",
+    "docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/fw001-revision.json"
+  ],
+  "corrections": [
+    {
+      "finding_id": "FW-001",
+      "reproduction": "REPL confirmou main.py remoto com 0 bytes e SHA256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; estacao.py remoto coincidiu com o fonte local.",
+      "root_cause": "O inicializador main.py vazio não importava estacao nem executava estacao.main() no boot; a origem histórica do esvaziamento não foi determinada nesta correção.",
+      "files": [
+        "firmware/main.py"
+      ],
+      "rationale": "Reutilizado o inicializador local existente, sem editar fontes: gravados somente seus 31 bytes no main.py da placa. Rastreados firmware/main.py e a guarda __main__ em firmware/estacao.py até estacao.main(); estacao.py permaneceu idêntico por SHA256 b45141be2442611c2f08a76cc7c535d3bf316dc47262982b6748e38a8e930044. main.py remoto vazio não exigiu backup não vazio; backup histórico existente em /tmp/esp32-firmware-check-20261103/main.py foi preservado. Configuração não lida, drivers e intervalos não alterados.",
+      "tests": "python3 /tmp/esp32-fw001-recovery.py (cópia auditável em evidence/fw001-recovery.py): reprodução, transferência, comparação byte a byte/SHA256, compile no MicroPython, machine.reset, observação passiva de 55 s, GET API e dashboard; GET adicional da última medição após fechamento da serial; campaign.mjs snapshot com caminho absoluto.",
+      "results": "PASS: readback dos 31 bytes SHA256 b32cb4641234f8f51435936ce34896735fd8779e31d92b358a2d94d7645d5b3f; compilação OK; boot automático; 11 leituras reais e 8 POSTs HTTP 200; API atualizada às 23:17:50.291785Z com idade 2.337935 s e desatualizada=false; dashboard HTTP 200. API posterior confirmou novos dados com serial fechada. Nenhuma alteração em fontes locais, flash erase, reinstalação ou dados simulados. Serial liberada ao final.",
+      "regression_risks": "Observação física limitada a 55 s mais consulta posterior; não é ensaio de estabilidade prolongado nem validação metrológica/calibração do MQ-135. Não foram executadas suítes amplas do backend/frontend, pois não houve alteração nesses fontes. Revalidação independente pendente do coordenador."
+    }
+  ],
+  "local_source_changes": [],
+  "remote_files_changed": [
+    "main.py"
+  ],
+  "serial_status": "closed; station running; do not reopen/reset during report preparation"
+}

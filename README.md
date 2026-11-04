@@ -310,6 +310,52 @@ Se aparecer `ETIMEDOUT`, houve uma falha real de comunicação naquela tentativa
 
 O MQ-135 está habilitado por padrão com `MQ135_HABILITADO = True` e envia a leitura ADC bruta. Para desabilitá-lo, altere a constante para `False`: o programa deixa de acessar o GPIO34 e transmite `"gas": null`. Uma falha de leitura também resulta em `null`.
 
+### Análise experimental do MQ-135 — calibração pendente
+
+#### Modo acadêmico do roteiro
+
+O modo nominal solicitado pelo proprietário aplica diretamente o cálculo do exemplo, sem considerar os parâmetros desconhecidos como se fossem medidos. Execute uma vez `python -m BackEnd.calibrar_mq135 --roteiro` para criar uma referência a partir das cinco últimas medições reais do SQLite, todas recentes e com ADC entre 1 e 4094. O banco é somente lido; o resultado é salvo separadamente em `BackEnd/data/mq135-roteiro.json`, sem sobrescrita nem recalibração automática. São cinco transmissões reais da estação, não as amostras a cada 200 ms do exemplo. O ambiente da referência não é presumido como ar limpo.
+
+Como o firmware transmite ADC de 12 bits, a normalização equivalente à utilizada com `read_u16()/65535` no PDF é `ADC/4095`. No modelo nominal do exemplo, `Rs = (4095/ADC − 1) × 10000 Ω`, `R₀ = média(Rs)/3,6` e a estimativa é `exp((ln(Rs/R₀) − b)/a)`. A tensão nominal de 3,3 V cancela algebricamente nessa expressão do exemplo; isso não comprova a tensão física nem corrige o divisor real. Essa opção não transforma Rs nominal em resistência medida. Os pares de coeficientes são os do roteiro descritos abaixo.
+
+`GET /mq135/analise` retorna `EXPERIMENTAL_ROTEIRO`, os quatro resultados em `gas` e `estimativas_ppm`, `unidade: ppm_estimados`, `identifica_tipo_gas: false`, referência e `validacao_fisica: false`. O dashboard substitui o cartão bruto por CO₂ estimado e apresenta também amônia, álcool e benzeno. O ADC permanece somente como entrada interna da aquisição; os contratos de coleta existentes não mudam e o histórico anterior não é apagado. Leituras ausentes, antigas ou saturadas não geram estimativas. Uma calibração física presente tem prioridade e não é substituída silenciosamente pelo modo nominal se for inválida.
+
+Os números são saídas de quatro curvas aplicadas ao mesmo sinal, não identificação do gás nem quatro medições independentes. O modo nominal não possui uma faixa metrológica validada e não serve para alertas de saúde. A calibração física documentada a seguir permanece como alternativa para quando houver medidas e referência apropriadas.
+
+O MQ-135 usa um material semicondutor cuja resistência varia com a exposição a gases e também com condições ambientais. Um módulo pode oferecer **AO**, tensão analógica ligada ao circuito do sensor, e **DO**, saída digital de comparação com limiar do módulo; o projeto usa AO para preservar variações do sinal. O campo `gas` continua armazenando o ADC bruto, sem representar ppm.
+
+O roteiro fornecido do Prof. Olavo Ito usa `R₀ = média(Rs)/3,6` no exemplo e calcula cada curva com `exp((ln(Rs/R₀) − b)/a)`. Pares `(a, b)`: CO₂ `(-0,42; 1,89)`, NH₃ `(-0,42; 1,15)`, álcool `(-0,40; 1,34)` e benzeno `(-0,38; 1,23)`. São parâmetros acadêmicos, não comprovados para esta placa. O texto do roteiro descreve uma equação de potência com notação diferente do código; a implementação reproduz o código, sem afirmar equivalência. A calibração `3,6` e `RL=10 kΩ` são exemplos, não valores medidos da montagem.
+
+Sem uma curva de calibração ADC por dispositivo, não é correto substituir a tensão real por `ADC/4095 × 3,3 V`: a atenuação e as características reais do ADC precisam ser consideradas. O código do roteiro usa 3,3 V como referência do ADC e tensão do circuito sem incluir o divisor; não foi copiado para esta montagem. Consulte a [documentação da Espressif sobre ADC e calibração](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/adc/index.html).
+
+O [manual da Winsen](https://www.winsen-sensor.com/d/files/mq135-%28ver1_6%29---manual.pdf) especifica condições de ensaio com tensão de circuito e aquecedor de 5,0 V ± 0,1 V, resistência de carga ajustável e pré-aquecimento superior a 48 horas para o ensaio. Aquecimento não é calibração; não se assume que a montagem real foi medida ou validada.
+
+Para o circuito resistivo simples do fabricante, `Rs = RL × (Vc / Vao − 1)`, sendo `Rs` a resistência sensível, `RL` a carga e `Vc` a alimentação do circuito sensor. Se AO estiver diretamente ligado ao divisor previsto de resistores `Rsuperior` e `Rinferior`, sem buffer ou outra carga relevante, `Vao = Vadc × (Rsuperior + Rinferior) / Rinferior` e a carga efetiva é `RL || (Rsuperior + Rinferior)`. Com dois resistores de 10 kΩ ideais, `Vao = 2 × Vadc`, mas o ramo de 20 kΩ também carrega o circuito; isso depende da topologia real do módulo. Com circuito de saída diferente, as fórmulas não se aplicam sem nova análise.
+
+[BackEnd/mq135.py](BackEnd/mq135.py) contém funções para interpolação ADC entre pontos efetivamente medidos, correção do divisor, `Rs`, razão e curvas. Não extrapola fora dos pontos de calibração ou da faixa de razão validada pelo operador. `GET /mq135/analise` consulta a última leitura real e retorna `PENDENTE` enquanto faltar calibração ou a medição for antiga, nula ou inválida. Não altera os registros. A função `avaliar_adc` também permite recalcular leituras históricas com uma calibração explicitamente escolhida, mas não há endpoint histórico de estimativas: valores antigos só devem ser comparados se a mesma montagem e calibração forem aplicáveis.
+
+Para habilitar futuramente, prepare um JSON local com os campos abaixo preenchidos com **dados medidos**, sem usar valores fictícios. Deixe `validacao_fisica` falso até verificar a montagem e a faixa das curvas. `pontos_adc` são pares `[código ADC, tensão em D34 em volts]`, ordenados e medidos em vários pontos com a atenuação usada; o backend interpola linearmente entre eles, de modo que a adequação dessa aproximação deve ser verificada. `amostras_adc` contém pelo menos cinco leituras coletadas no ambiente de referência. `intervalo_razao_validado` é uma faixa positiva de `Rs/R₀` fundamentada para **todas** as curvas, não fornecida automaticamente pelo roteiro.
+
+```json
+{
+  "identificacao": "identifique montagem, método e condições",
+  "versao_modelo": "olavo-1",
+  "validacao_fisica": false,
+  "tensao_circuito_v": null,
+  "rl_ohms": null,
+  "divisor_superior_ohms": null,
+  "divisor_inferior_ohms": null,
+  "pontos_adc": [],
+  "amostras_adc": [],
+  "relacao_referencia": null,
+  "intervalo_razao_validado": []
+}
+```
+
+Após preencher e validar os campos, ajuste `validacao_fisica` para `true` e execute, na raiz do projeto, `python -m BackEnd.calibrar_mq135 caminho-do-json`. O comando calcula `R₀ = média(Rs)/relação_de_referência` e cria `BackEnd/data/mq135-calibracao.json`, com parâmetros, amostras, identificação, modelo e data UTC. Ele não sobrescreve um arquivo existente; preserve a calibração anterior antes de substituí-la deliberadamente. Não há recalibração automática nem edição do banco de medições. Para desabilitar, mantenha a validação como `false` no arquivo local ou retire-o após preservá-lo.
+
+Na verificação física, confirme alimentação do aquecedor e do circuito sensor, GND comum e topologia do módulo; meça os dois resistores, RL, AO e D34 com instrumento adequado, garantindo que D34 permaneça dentro das especificações do ESP32. Estabeleça a curva ADC da própria placa e condições conhecidas de referência após estabilização térmica. Registre método, temperatura, umidade e data; obtenha uma faixa sustentada para cada curva antes de definir a faixa comum. Não há compensação validada de temperatura/umidade. O MQ-135 não identifica gases individualmente, e os resultados não são adequados para alertas de saúde ou segurança. Testes de software não validam a montagem física.
+
 Os pinos e parâmetros foram preservados:
 
 | Dispositivo | Configuração |

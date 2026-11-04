@@ -1,0 +1,1 @@
+Owner repeatedly authorized firmware recovery and serial transfer in this conversation. Local estacao.py keeps 5000/7000/10000 ms and MQ135 enabled. Serial raw REPL failed; pyserial with DTR/RTS disabled responded SERIAL_OK. No credentials read. Working tree contains prior MQ135 changes, preserved.

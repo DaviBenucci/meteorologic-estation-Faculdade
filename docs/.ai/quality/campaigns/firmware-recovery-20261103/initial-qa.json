@@ -1,0 +1,21 @@
+{
+  "agent": "terra_qa",
+  "correction_attempt": 0,
+  "outcome": "failed",
+  "environment": "ESP32 físico /dev/ttyACM0, MicroPython REPL, pyserial 3.5, Linux; API local porta 8000",
+  "revision": {"head":"37d03e1adb77eb8739f2f15fccfc0839e149c8ed","worktree_sha256":"6cc47a293b4ae93681c6cd33c9f6ea3aa69b915729a3d47c2a8786dff983847f"},
+  "evidence": ["docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/initial-qa.txt"],
+  "findings": [{
+    "id":"FW-001",
+    "component":"Inicializador main.py na placa",
+    "environment":"ESP32 físico /dev/ttyACM0, REPL MicroPython, 115200 baud",
+    "steps":["Abrir porta com DTR e RTS falsos antes de open, interromper a execução e acessar REPL.","Consultar tamanho e SHA-256 de main.py remoto e comparar com firmware/main.py local."],
+    "expected":"O inicializador remoto contém firmware/main.py local e inicia a estação automaticamente.",
+    "actual":"main.py remoto existe com zero bytes e SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855; o local tem SHA-256 b32cb4641234f8f51435936ce34896735fd8779e31d92b358a2d94d7645d5b3f.",
+    "severity":"high",
+    "evidence":["docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/initial-qa.txt"],
+    "reproducibility":"confirmed",
+    "requirement":"docs/qa-firmware-recovery.md"
+  }],
+  "observations":["estacao.py remoto coincide com local por SHA-256; preservar.","API e dashboard responderam HTTP 200 ao final; medição existente estava desatualizada. Porta 8000 não estava em escuta no primeiro levantamento, mas posteriormente estava disponível; não há defeito confirmado de backend.","Execução após boot, novos POSTs e apresentação de dados recentes no dashboard não foram verificados nesta etapa. mpremote não foi testado novamente; REPL por pyserial funcionou."]
+}

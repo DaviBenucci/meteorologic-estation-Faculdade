@@ -1,0 +1,4 @@
+After serial close 2026-11-03T23:18:39.928704+00:00
+HTTP GET http://10.62.215.51:8000/medicoes/ultima 200
+{"temperatura_DHT": 28.4, "umidade": 69.700008, "temperatura_BMP": 28.955566, "pressao_BMP": 928.8209, "luminosidade": 0, "gas": 415, "recebida_em": "2026-11-03T23:18:32.922286Z", "idade_segundos": 6.963554, "desatualizada": false}
+PASS: new real measurement arrived after serial was closed; no serial reopen/reset.

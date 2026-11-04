@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .alertas import avaliar_alertas
+from .mq135 import analisar_medicao
 from .models import EstatisticasHistorico, Medicao, MedicaoConsulta, MedicaoHistorico, PeriodoHistorico, SemMedicoes
 from .storage import (
     LIMITE_HISTORICO,
@@ -64,6 +65,11 @@ def consultar_resumo(periodo: PeriodoHistorico | None = Query(default=None)) -> 
 @app.get("/alertas/atuais")
 def consultar_alertas() -> dict:
     return avaliar_alertas(consultar_ultima_medicao())
+
+
+@app.get("/mq135/analise")
+def consultar_analise_mq135() -> dict:
+    return analisar_medicao(consultar_ultima_medicao())
 
 
 frontend_dir = Path(__file__).resolve().parent.parent / "FrontEnd"

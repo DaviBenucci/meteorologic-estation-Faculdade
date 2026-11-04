@@ -1,0 +1,8 @@
+QA independente, tentativa 0: /dev/ttyACM0, 115200, pyserial 3.5, DTR=False e RTS=False definidos antes de open. Interrupção Ctrl-C autorizada; porta fechada após inspeção. Não se leu config.py.
+REPL: QA_FILES [('main.py', 0, 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'), ('estacao.py', 5456, 'b45141be2442611c2f08a76cc7c535d3bf316dc47262982b6748e38a8e930044')]
+Local sha256 firmware/main.py: b32cb4641234f8f51435936ce34896735fd8779e31d92b358a2d94d7645d5b3f
+Local sha256 firmware/estacao.py: b45141be2442611c2f08a76cc7c535d3bf316dc47262982b6748e38a8e930044
+HTTP GET http://127.0.0.1:8000/dashboard/ 200; GET /medicoes/ultima 200, medição existente, recebida_em 2026-11-03T22:54:42.565429Z, desatualizada true. Antes disso ss não listou porta 8000; disponibilidade mudou durante QA.
+HEAD antes e depois: 37d03e1adb77eb8739f2f15fccfc0839e149c8ed
+Fingerprint antes e depois: 6cc47a293b4ae93681c6cd33c9f6ea3aa69b915729a3d47c2a8786dff983847f
+Não foram observados novos POSTs nem execução após reinício nesta etapa.

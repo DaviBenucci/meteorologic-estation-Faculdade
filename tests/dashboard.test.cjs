@@ -17,6 +17,32 @@ const recentReadings = {
 const reply = (data, ok = true) => ({ ok, json: async () => data });
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
+test("análise de gases indica calibração pendente sem apresentar concentrações", () => {
+  assert.match(html, /Calibração pendente — estimativas indisponíveis/);
+  assert.match(html, /Estimativas de CO₂, NH₃, álcool e benzeno indisponíveis/);
+  assert.match(html, /O sensor não identifica individualmente os gases/);
+});
+
+test("análise exibe estimativas experimentais somente quando retornadas pela API", async () => {
+  let dado = { estado: "PENDENTE" };
+  const page = await dashboard((_, url) => reply(url.includes("mq135/analise") ? dado : recentReadings));
+  assert.match(page.elements.get("gas-analysis-status").textContent, /pendente/);
+  dado = { estado: "EXPERIMENTAL", estimativas_ppm: { co2: 100, amonia: 20, alcool: 30, benzeno: 40 } };
+  await page.interval.callback();
+  assert.match(page.elements.get("gas-estimates").textContent, /CO₂: 100 ppm/);
+  assert.match(page.elements.get("gas-analysis-status").textContent, /não são medições independentes/);
+  assert.equal(page.value("gas"), "100");
+  assert.equal(page.elements.get("gas-unit").hidden, false);
+  dado.estado = "EXPERIMENTAL_ROTEIRO";
+  await page.interval.callback();
+  assert.match(page.elements.get("gas-analysis-status").textContent, /parâmetros nominais/);
+  dado = { estado: "PENDENTE" };
+  await page.interval.callback();
+  assert.doesNotMatch(page.elements.get("gas-estimates").textContent, /ppm/);
+  assert.equal(page.value("gas"), "Indisponível");
+  assert.equal(page.elements.get("gas-unit").hidden, true);
+});
+
 async function dashboard(fetchResponse) {
   const elements = new Map();
   const calls = [];
@@ -125,16 +151,16 @@ test("consulta a cada cinco segundos e atualiza sem recarregar", async () => {
   assert.equal(page.interval.delay, 5000);
   data = { ...recentReadings, temperatura_DHT: 24.2, luminosidade: 1, gas: 169 };
   await page.interval.callback();
-  assert.equal(page.calls.length, 8);
+  assert.equal(page.calls.length, 10);
   assert.equal(page.value("temperatura_DHT"), "24,2");
   assert.equal(page.value("luminosidade"), "Ambiente escuro");
-  assert.equal(page.value("gas"), "169");
+  assert.equal(page.value("gas"), "Indisponível"); // ADC nunca é apresentado como ppm.
 });
 
 test("campos nulos ou omitidos não viram zero, mas zero real é válido", async () => {
   const page = await dashboard(() => reply({ temperatura_DHT: 0, gas: 0, umidade: null }));
   assert.equal(page.value("temperatura_DHT"), "0,0");
-  assert.equal(page.value("gas"), "0");
+  assert.equal(page.value("gas"), "Indisponível");
   for (const field of ["umidade", "temperatura_BMP", "pressao_BMP", "luminosidade"]) {
     assert.equal(page.value(field), "Indisponível");
     assert.equal(page.elements.get(`${field}-unit`).hidden, true);
@@ -219,7 +245,7 @@ test("limita consultas a quatro segundos e impede requisições sobrepostas", as
     signal.addEventListener("abort", () => reject(new Error("timeout")));
   }));
   await page.query();
-  assert.equal(page.calls.length, 4);
+  assert.equal(page.calls.length, 5);
   const timeout = [...page.timers.values()][0];
   assert.equal(timeout.delay, 4000);
   for (const timer of [...page.timers.values()]) timer.callback();

@@ -17,6 +17,8 @@ dist/
 # Banco local e arquivos auxiliares de transação SQLite.
 /BackEnd/data/*.db
 /BackEnd/data/*.db-*
+/BackEnd/data/mq135-calibracao.json
+/BackEnd/data/mq135-roteiro.json
 
 # Ferramentas locais, caches e resultados de testes.
 .serena/

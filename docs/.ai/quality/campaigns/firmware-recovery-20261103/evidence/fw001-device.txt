@@ -1,0 +1,93 @@
+FW-001 recovery: 2026-11-03T23:16:55Z
+Local main.py bytes=31 SHA256=b32cb4641234f8f51435936ce34896735fd8779e31d92b358a2d94d7645d5b3f
+API_BEFORE HTTP 200 {"temperatura_DHT":27.0,"umidade":75.9,"temperatura_BMP":28.20908,"pressao_BMP":928.842064,"luminosidade":0,"gas":384,"recebida_em":"2026-11-03T22:54:42.565429Z","idade_segundos":1332.639878,"desatualizada":true}
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:4200
+load:0x40078000,len:15236
+load:0x40080400,len:3344
+entry 0x400805a8
+MicroPython v1.29.0 on 2026-08-24; Generic ESP32 module with ESP32
+Type "help()" for more information.
+>>> 
+import os, hashlib, binascii; print('FW001_FILES', [(p, os.stat(p)[6], binascii.hexlify(hashlib.sha256(open(p,'rb').read()).digest()).decode()) for p in ('main.py','estacao.py')])
+FW001_FILES [('main.py', 0, 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'), ('estacao.py', 5456, 'b45141be2442611c2f08a76cc7c535d3bf316dc47262982b6748e38a8e930044')]
+>>> 
+REPRODUCED FW-001: remote main.py empty; historical nonempty backup preserved in /tmp/esp32-firmware-check-20261103/main.py
+f=open('main.py','wb'); n=f.write(b'import estacao\n\nestacao.main()\n'); f.close(); print('FW001_WRITTEN', n)
+FW001_WRITTEN 31
+>>> 
+print('FW001_READBACK', repr(open('main.py','rb').read())); compile(open('main.py').read(),'main.py','exec'); print('FW001_SYNTAX_OK')
+FW001_READBACK b'import estacao\n\nestacao.main()\n'
+<code>
+FW001_SYNTAX_OK
+>>> 
+import os, hashlib, binascii; print('FW001_FILES', [(p, os.stat(p)[6], binascii.hexlify(hashlib.sha256(open(p,'rb').read()).digest()).decode()) for p in ('main.py','estacao.py')])
+FW001_FILES [('main.py', 31, 'b32cb4641234f8f51435936ce34896735fd8779e31d92b358a2d94d7645d5b3f'), ('estacao.py', 5456, 'b45141be2442611c2f08a76cc7c535d3bf316dc47262982b6748e38a8e930044')]
+>>> 
+READBACK_PASS: exact bytes and SHA256=b32cb4641234f8f51435936ce34896735fd8779e31d92b358a2d94d7645d5b3f
+REBOOT: machine.reset(); automatic main.py startup, no manual estacao invocation
+import machine; machine.reset()
+ets Jul 29 2019 12:21:46
+
+rst:0xc (SW_CPU_RESET),boot:0x17 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:4200
+load:0x40078000,len:15236
+load:0x40080400,len:3344
+entry 0x400805a8
+
+[Wi-Fi] Tentativa de conexão iniciada.
+
+[Sensores] Leitura concluída. Duração: 386 ms: {'temperatura_DHT': 29.1, 'umidade': 68.200008, 'temperatura_BMP': 28.448766, 'gas': 416, 'pressao_BMP': 928.8194, 'luminosidade': 0}
+
+[Wi-Fi] Conectado. IP do ESP32: 10.62.215.1
+
+[HTTP] Medição aceita (HTTP 200). Duração do POST: 1425 ms.
+
+[Sensores] Leitura concluída. Duração: 275 ms: {'temperatura_DHT': 28.300002, 'umidade': 70.8, 'temperatura_BMP': 28.830746, 'gas': 415, 'pressao_BMP': 928.8797, 'luminosidade': 0}
+
+[HTTP] Medição aceita (HTTP 200). Duração do POST: 765 ms.
+
+[Sensores] Leitura concluída. Duração: 275 ms: {'temperatura_DHT': 28.300002, 'umidade': 70.5, 'temperatura_BMP': 28.713414, 'gas': 406, 'pressao_BMP': 928.862336, 'luminosidade': 0}
+
+[Sensores] Leitura concluída. Duração: 275 ms: {'temperatura_DHT': 28.300002, 'umidade': 70.1, 'temperatura_BMP': 28.745868, 'gas': 409, 'pressao_BMP': 928.8616, 'luminosidade': 0}
+
+[HTTP] Medição aceita (HTTP 200). Duração do POST: 472 ms.
+
+[Sensores] Leitura concluída. Duração: 276 ms: {'temperatura_DHT': 28.300002, 'umidade': 69.9, 'temperatura_BMP': 28.82825, 'gas': 413, 'pressao_BMP': 928.8404, 'luminosidade': 0}
+
+[HTTP] Medição aceita (HTTP 200). Duração do POST: 1797 ms.
+
+[Sensores] Leitura concluída. Duração: 276 ms: {'temperatura_DHT': 28.300002, 'umidade': 69.700008, 'temperatura_BMP': 28.82825, 'gas': 411, 'pressao_BMP': 928.8297, 'luminosidade': 0}
+
+[Sensores] Leitura concluída. Duração: 275 ms: {'temperatura_DHT': 28.300002, 'umidade': 69.6, 'temperatura_BMP': 28.85821, 'gas': 400, 'pressao_BMP': 928.85048, 'luminosidade': 0}
+
+[HTTP] Medição aceita (HTTP 200). Duração do POST: 417 ms.
+
+[Sensores] Leitura concluída. Duração: 275 ms: {'temperatura_DHT': 28.300002, 'umidade': 69.5, 'temperatura_BMP': 28.940588, 'gas': 419, 'pressao_BMP': 928.82936, 'luminosidade': 0}
+
+[HTTP] Medição aceita (HTTP 200). Duração do POST: 192 ms.
+
+[Sensores] Leitura concluída. Duração: 275 ms: {'temperatura_DHT': 28.300002, 'umidade': 69.5, 'temperatura_BMP': 28.82825, 'gas': 393, 'pressao_BMP': 928.8423, 'luminosidade': 0}
+
+[HTTP] Medição aceita (HTTP 200). Duração do POST: 255 ms.
+
+[Sensores] Leitura concluída. Duração: 275 ms: {'temperatura_DHT': 28.2, 'umidade': 69.4, 'temperatura_BMP': 28.868194, 'gas'
+: 411, 'pressao_BMP': 928.8479, 'luminosidade': 0}
+
+[Sensores] Leitura concluída. Duração: 275 ms: {'temperatura_DHT': 28.2, 'umidade': 69.8, 'temperatura_BMP': 28.915624, 'gas': 410, 'pressao_BMP': 928.8368, 'luminosidade': 0}
+
+[HTTP] Medição aceita (HTTP 200). Duração do POST: 149 ms.
+
+OBSERVED real sensor cycles=11 successful real POSTs=8
+API_AFTER HTTP 200 {"temperatura_DHT":28.2,"umidade":69.8,"temperatura_BMP":28.915624,"pressao_BMP":928.8368,"luminosidade":0,"gas":410,"recebida_em":"2026-11-03T23:17:50.291785Z","idade_segundos":2.337935,"desatualizada":false}
+DASHBOARD HTTP 200 bytes=9399
+PASS: integrity, syntax, automatic device startup, real reads, real POSTs and updated latest API
+SERIAL_CLOSED: station left running, no interrupt/reset after observation

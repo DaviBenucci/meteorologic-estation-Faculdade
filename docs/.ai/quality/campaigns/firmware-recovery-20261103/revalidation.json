@@ -1,0 +1,10 @@
+{
+ "agent":"terra_qa",
+ "correction_attempt":1,
+ "outcome":"inconclusive",
+ "environment":"Linux, ESP32 físico em funcionamento sem reabrir /dev/ttyACM0, API 127.0.0.1:8000; browser access host indisponível",
+ "revision":{"head":"37d03e1adb77eb8739f2f15fccfc0839e149c8ed","worktree_sha256":"6cc47a293b4ae93681c6cd33c9f6ea3aa69b915729a3d47c2a8786dff983847f"},
+ "evidence":["docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/revalidation.txt","docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/fw001-device.txt"],
+ "findings":[],
+ "observations":["FW-001: evidência de readback e boot de Sol revisada; API observada independentemente avançando entre duas amostras com ADC bruto e estado recente.","Histórico, estatísticas, alertas e análise MQ135 responderam HTTP 200; MQ135 pendente de calibração.","Dashboard respondeu HTTP 200; navegação, renderização de gráficos e alertas e interação ficaram bloqueadas pela indisponibilidade do host do navegador. Resultado geral inconclusivo até teste visual independente."]
+}

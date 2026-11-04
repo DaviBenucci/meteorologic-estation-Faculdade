@@ -1,0 +1,45 @@
+{
+  "agent": "sol_developer",
+  "correction_attempt": 1,
+  "outcome": "passed",
+  "revision": {
+    "head": "37d03e1adb77eb8739f2f15fccfc0839e149c8ed",
+    "worktree_sha256": "6cc47a293b4ae93681c6cd33c9f6ea3aa69b915729a3d47c2a8786dff983847f"
+  },
+  "gates": [
+    {
+      "categories": [
+        "targeted-tests",
+        "integration-regression"
+      ],
+      "command": "python3 /tmp/esp32-fw001-recovery.py",
+      "environment": "Linux; ESP32 físico /dev/ttyACM0; MicroPython v1.29.0 (2026-08-24), pyserial 3.5, 115200 baud; DTR=False/RTS=False definidos antes de open; backend http://10.62.215.51:8000",
+      "revision": {
+        "head": "37d03e1adb77eb8739f2f15fccfc0839e149c8ed",
+        "worktree_sha256": "6cc47a293b4ae93681c6cd33c9f6ea3aa69b915729a3d47c2a8786dff983847f"
+      },
+      "outcome": "passed",
+      "evidence": [
+        "docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/fw001-device.txt",
+        "docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/fw001-recovery.py"
+      ],
+      "results": "Remote initializer byte equality and SHA256 passed; MicroPython compile passed; automatic startup after machine.reset; 11 real reads, 8 real HTTP 200 POSTs; latest API received recent measurement (2.337935 s, stale=false); dashboard GET 200; serial closed without interrupting station."
+    },
+    {
+      "categories": [
+        "integration-regression"
+      ],
+      "command": "python3 urllib.request.urlopen GET http://10.62.215.51:8000/medicoes/ultima after serial close; assert HTTP 200, desatualizada is False, 0 <= idade_segundos < 15, recebida_em > 2026-11-03T23:17:50.291785Z",
+      "environment": "Linux Python 3; API at http://10.62.215.51:8000; ESP32 serial closed",
+      "revision": {
+        "head": "37d03e1adb77eb8739f2f15fccfc0839e149c8ed",
+        "worktree_sha256": "6cc47a293b4ae93681c6cd33c9f6ea3aa69b915729a3d47c2a8786dff983847f"
+      },
+      "outcome": "passed",
+      "evidence": [
+        "docs/.ai/quality/campaigns/firmware-recovery-20261103/evidence/fw001-after-close.txt"
+      ],
+      "results": "New real measurement arrived after serial close; station continued independently."
+    }
+  ]
+}

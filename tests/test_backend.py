@@ -17,6 +17,7 @@ from urllib.request import Request, urlopen
 import uvicorn
 
 from BackEnd import storage
+from BackEnd import mq135
 from BackEnd.main import app
 
 
@@ -38,6 +39,8 @@ class BackendTests(unittest.TestCase):
         cls.database = Path(cls.temporary.name) / "data" / "estacao.db"
         cls.database_patch = patch.object(storage, "CAMINHO_BANCO", cls.database)
         cls.database_patch.start()
+        cls.roteiro_patch = patch.object(mq135, "CAMINHO_ROTEIRO", cls.database.parent / "roteiro.json")
+        cls.roteiro_patch.start()
         cls.start_server()
 
     @classmethod
@@ -58,6 +61,7 @@ class BackendTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.stop_server()
         cls.database_patch.stop()
+        cls.roteiro_patch.stop()
         cls.temporary.cleanup()
 
     @classmethod
@@ -88,6 +92,56 @@ class BackendTests(unittest.TestCase):
 
     def test_sem_medicoes(self):
         self.assertEqual(self.request("GET", "/medicoes/ultima"), (200, {"status": "sem_medicoes"}))
+
+    def test_mq135_sem_calibracao_preserva_adc(self):
+        with patch.object(mq135, "CAMINHO_CALIBRACAO", self.database.parent / "inexistente.json"):
+            self.assertEqual(self.request("GET", "/mq135/analise")[1]["estado"], "PENDENTE")
+            self.request("POST", "/medicoes", {**SAMPLE, "gas": 270})
+            dados = self.request("GET", "/mq135/analise")[1]
+            self.assertEqual(dados["estado"], "PENDENTE")
+            self.assertNotIn("adc", dados)
+            self.assertNotIn("estimativas_ppm", dados)
+            self.assertEqual(self.request("GET", "/medicoes/ultima")[1]["gas"], 270)
+
+    def test_mq135_roteiro_json_converte_e_nao_recalibra(self):
+        from BackEnd.calibrar_mq135 import main as registrar_referencia
+
+        arquivo = self.database.parent / "roteiro-integracao.json"
+        with patch.object(mq135, "CAMINHO_CALIBRACAO", self.database.parent / "fisica-ausente.json"), \
+             patch.object(mq135, "CAMINHO_ROTEIRO", arquivo), \
+             patch("BackEnd.calibrar_mq135.CAMINHO_ROTEIRO", arquivo), \
+             patch.object(sys, "argv", ["calibrar", "--roteiro"]):
+            for _ in range(5):
+                self.request("POST", "/medicoes", {**SAMPLE, "gas": 2000})
+            registrar_referencia()
+            antes = arquivo.read_bytes()
+            dados = self.request("GET", "/mq135/analise")[1]
+            self.assertEqual(dados["estado"], "EXPERIMENTAL_ROTEIRO")
+            self.assertFalse(dados["identifica_tipo_gas"])
+            self.assertFalse(dados["validacao_fisica"])
+            self.assertEqual(dados["gas"], dados["estimativas_ppm"])
+            self.assertAlmostEqual(dados["razao_rs_r0"], 3.6)
+            self.assertNotIn("adc", dados)
+            self.request("POST", "/medicoes", {**SAMPLE, "gas": 1800})
+            self.assertNotEqual(self.request("GET", "/mq135/analise")[1]["gas"], dados["gas"])
+            self.assertEqual(arquivo.read_bytes(), antes)
+            self.request("POST", "/medicoes", {**SAMPLE, "gas": 0})
+            self.assertEqual(self.request("GET", "/mq135/analise")[1]["estado"], "PENDENTE")
+
+    def test_mq135_analise_calibrada_e_arquivo_invalido(self):
+        config = {"validacao_fisica": True, "versao_modelo": "olavo-1", "identificacao": "teste",
+                  "pontos_adc": [[0, 0], [4000, 2]], "tensao_circuito_v": 5,
+                  "rl_ohms": 20000, "divisor_superior_ohms": 10000, "divisor_inferior_ohms": 10000,
+                  "r0_ohms": 5000, "intervalo_razao_validado": [1, 10]}
+        arquivo = self.database.parent / "teste-calibracao.json"
+        with patch.object(mq135, "CAMINHO_CALIBRACAO", arquivo):
+            self.request("POST", "/medicoes", {**SAMPLE, "gas": 2000})
+            arquivo.write_text(json.dumps(config), encoding="utf-8")
+            dados = self.request("GET", "/mq135/analise")[1]
+            self.assertEqual(dados["estado"], "EXPERIMENTAL")
+            self.assertEqual(set(dados["estimativas_ppm"]), {"co2", "amonia", "alcool", "benzeno"})
+            arquivo.write_text("[]", encoding="utf-8")
+            self.assertEqual(self.request("GET", "/mq135/analise")[1]["estado"], "PENDENTE")
 
     def test_alertas_limites_nulos_e_multiplos(self):
         self.assertEqual(self.request("GET", "/alertas/atuais")[1]["estado"], "INDISPONIVEL")

@@ -20,10 +20,12 @@ const statisticsElement = document.getElementById("statistics");
 let querying = false;
 let historyQuerying = false;
 let alertsQuerying = false;
+let gasQuerying = false;
 
 function renderReadings(data) {
   readingsElement.dataset.stale = "false";
   for (const [field, decimals] of Object.entries(fields)) {
+    if (field === "gas") continue;
     const value = data[field];
     const available = typeof value === "number" && Number.isFinite(value)
       && (field !== "luminosidade" || value === 0 || value === 1);
@@ -41,6 +43,49 @@ function renderReadings(data) {
         maximumFractionDigits: decimals,
       });
     }
+  }
+}
+
+async function queryGasAnalysis() {
+  if (gasQuerying) return;
+  gasQuerying = true;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4000);
+  const status = document.getElementById("gas-analysis-status");
+  const estimates = document.getElementById("gas-estimates");
+  const gas = document.getElementById("gas");
+  const unit = document.getElementById("gas-unit");
+  let available = false;
+  try {
+    const response = await fetch("/mq135/analise", { cache: "no-store", signal: controller.signal });
+    if (!response.ok) throw new Error("API indisponível");
+    const data = await response.json();
+    if (["EXPERIMENTAL", "EXPERIMENTAL_ROTEIRO"].includes(data.estado) && data.estimativas_ppm
+      && ["co2", "amonia", "alcool", "benzeno"].every(key => validNumber(data.estimativas_ppm[key]) && data.estimativas_ppm[key] > 0)) {
+      status.textContent = data.estado === "EXPERIMENTAL_ROTEIRO"
+        ? "Modelo do roteiro — parâmetros nominais, sem validação física"
+        : "Estimativas experimentais — não são medições independentes";
+      gas.textContent = data.estimativas_ppm.co2.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+      gas.classList.toggle("is-unavailable", false);
+      unit.hidden = false;
+      available = true;
+      estimates.textContent = [["CO₂", "co2"], ["NH₃", "amonia"], ["Álcool", "alcool"], ["Benzeno", "benzeno"]]
+        .map(([label, key]) => `${label}: ${data.estimativas_ppm[key].toLocaleString("pt-BR", { maximumFractionDigits: 2 })} ppm`).join(" · ");
+    } else {
+      status.textContent = "Calibração pendente — estimativas indisponíveis.";
+      estimates.textContent = "Estimativas de CO₂, NH₃, álcool e benzeno indisponíveis.";
+    }
+  } catch {
+    status.textContent = "Análise experimental indisponível — falha na API.";
+    estimates.textContent = "";
+  } finally {
+    if (!available) {
+      gas.textContent = "Indisponível";
+      gas.classList.toggle("is-unavailable", true);
+      unit.hidden = true;
+    }
+    clearTimeout(timeout);
+    gasQuerying = false;
   }
 }
 
@@ -275,6 +320,7 @@ historyPeriod.addEventListener("change", queryHistory);
 queryReadings();
 queryHistory();
 queryAlerts();
+queryGasAnalysis();
 setInterval(async () => {
-  await Promise.all([queryReadings(), queryHistory(), queryAlerts()]);
+  await Promise.all([queryReadings(), queryHistory(), queryAlerts(), queryGasAnalysis()]);
 }, 5000);
